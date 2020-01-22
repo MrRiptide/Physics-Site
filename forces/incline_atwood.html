@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Inclined Atwood Simulation</title>
+  </head>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+$("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+  <div class="sliders" style="float: left;">
+    <div class="angle">
+      <span>Angle = 45°</span><br>
+      <input type="range" min="0" max="90" value="45" step=0.1><br>
+    </div>
+    <div class="mu">
+      <span>Mu = 0.5</span><br>
+      <input type="range" min="0" max="1" value="0.5" step=0.01>
+    </div>
+    <div class="box1" style="color:red;">
+      <span>Box 1 Mass = 5kg</span><br>
+      <input type="range" min="1" max="10" value="5" step=0.1><br>
+    </div>
+    <div class="box2" style="color:blue;">
+      <span>Box 2 Mass = 5kg</span><br>
+      <input type="range" min="1" max="10" value="5" step=0.1><br>
+    </div>
+  </div>
+  <div class="buttons" style="float:left;">
+    <button onclick=runPhysics()>Run Simulation</button><br>
+    <button onclick=runDraw()>Reset Simulation</button><br>
+    <button onclick=stopPhysics()>Stop Simulation</button><br>
+    <input type="checkbox" id="showNumbers">Show numbers<br>
+  </div>
+  <div class="numbers" style="float:left; visibility:hidden;">
+    Values will appear here
+  </div>
+  <br style="line-height:500%">
+  <canvas style="border:1px solid red; float: right;" id="canvas" width="600" height="600"></canvas>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  var angle = 45;
+  var mu = 0.5;
+  var box1 = 5;
+  var box2 = 5;
+  var proc;
+
+  function stopPhysics() {
+    if (proc != null) {
+      clearInterval(proc);
+      proc = null;
+    }
+  }
+
+  function runDraw() {
+    stopPhysics();
+    calcPhysics();
+    draw(angle, mu, box1, box2);
+  }
+
+  // Angle slider
+  var angle_slider = $("div.angle input")[0];
+
+  angle_slider.oninput = function() {
+    angle = this.value;
+    runDraw();
+  }
+
+  // Mu slider
+  var mu_slider = $("div.mu input")[0];
+
+  mu_slider.oninput = function() {
+    mu = this.value;
+    runDraw();
+  }
+
+  // Box 1 mass slider
+  var box1_slider = $("div.box1 input")[0];
+
+  box1_slider.oninput = function() {
+    box1 = this.value;
+    runDraw();
+  }
+
+  // Box 2 slider
+  var box2_slider = $("div.box2 input")[0];
+
+  box2_slider.oninput = function() {
+    box2 = this.value;
+    runDraw();
+  }
+
+  // Show numbers checkbox
+  var numbers_checkbox = $("div.buttons input")[0];
+
+  numbers_checkbox.oninput = function() {
+    var value = "inherit";
+    if (numbers_checkbox.checked) {
+      value = "visible";
+    } else {
+      value = "hidden";
+    }
+
+    $("div.numbers")[0].style.visibility = value;
+  }
+
+  angle_slider.value = this.value;
+  mu_slider.value = this.value;
+  box1_slider.value = this.value;
+  box2_slider.value = this.value;
+  numbers_checkbox.checked = this.checked;
+
+  runDraw();
+
+  function degrees_to_radians(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi/180);
+  }
+
+  function draw(angle, mu, box1, box2, moved=0) {
+    angle = degrees_to_radians(angle);
+    var canvas = document.getElementById('canvas');
+    if (canvas.getContext) {
+      var ctx = canvas.getContext('2d');
+      ctx.save();
+
+      var size = 400;
+      var offset = 100;
+      var x_size = size * Math.cos(angle);
+      var x_start = size - x_size;
+      var y_end =  (size * Math.sin(angle));
+
+      // Alter left-side text display of values
+      let _angle = (angle * 180/Math.PI).toFixed(1);
+      let _mu = mu;
+      let _box1 = box1;
+      let _box2 = box2;
+      $("div.angle span").html(`Angle = ${_angle}°`);
+      $("div.mu span").html(`Mu = ${_mu}`);
+      $("div.box1 span").html(`Box 1 Mass = ${_box1}kg`);
+      $("div.box2 span").html(`Box 2 Mass = ${_box2}kg`);
+
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw incline
+      ctx.beginPath();
+      ctx.save();
+      ctx.fillStyle = "#4f4f4f";
+      ctx.lineWidth = 5;
+      ctx.moveTo(offset + size, offset + 0);
+      ctx.lineTo(offset + size, offset + size);
+      ctx.lineTo(offset + x_start, offset + size);
+      ctx.lineTo(offset + x_start, offset + y_end);
+      ctx.lineTo(offset + size, offset + 0);
+      ctx.stroke();
+      ctx.fill();
+      ctx.restore();
+
+      /*ctx.fillStyle = "#ff6b61";
+      draw_x = (x_start + (size/2)*Math.cos((angle)));
+      draw_y = (size/2)*Math.sin((angle));
+      ctx.translate(offset + draw_x, offset + draw_y);
+      ctx.rotate(-(angle));
+      ctx.fillRect(0, 0, 25, -50);
+      ctx.fillRect(0, 0, -25, -50);
+      ctx.restore();
+      ctx.save();*/
+
+      // Box1
+      var x_pos = size - ((size / 2) + 25 - moved)*Math.cos(angle);
+      var y_pos = ((size / 2) + 25 - moved)*Math.sin(angle);
+      var x_offset = 0;
+      var y_offset = 0;
+
+      ctx.beginPath();
+      ctx.save();
+      ctx.fillStyle = "#ff6b61";
+      ctx.strokeStyle = "#ff1100";
+      ctx.lineWidth = 2;
+      var i;
+      ctx.moveTo(offset + x_pos, offset + y_pos);
+      for (i = 1; i < 5; i++){
+        x_offset += -50 * Math.cos(angle-(degrees_to_radians(90)*i));
+        y_offset += 50 * Math.sin(angle-(degrees_to_radians(90)*i));
+        ctx.lineTo(offset + x_pos + x_offset, offset + y_pos + y_offset);
+      }
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Make pulley circle
+      ctx.beginPath();
+      ctx.save();
+      ctx.fillStyle = "#c4c4c4";
+      ctx.lineWidth = 3;
+      ctx.arc(offset + size, offset, 20, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Box1 to Pulley
+      ctx.beginPath();
+      ctx.save();
+      ctx.lineWidth = 3;
+      x_pos = size - ((size / 2) - 25 - moved)*Math.cos(angle);
+      y_pos = ((size / 2) - 25 - moved)*Math.sin(angle);
+      x_offset += -25 * Math.cos(angle-(degrees_to_radians(90)*i));
+      y_offset += 25 * Math.sin(angle-(degrees_to_radians(90)*i));
+
+      ctx.moveTo(offset + x_pos + x_offset, offset + y_pos + y_offset);
+      ctx.lineTo(offset + size + 20*Math.cos(degrees_to_radians(90) + angle), offset - 20*Math.sin(degrees_to_radians(90) + angle));
+      ctx.stroke();
+      ctx.restore();
+
+      // Pulley to Box2
+      ctx.beginPath();
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.moveTo(offset + size + 20, offset);
+      ctx.lineTo(offset + size + 25, offset + (size/2) - 25 + moved);
+      ctx.stroke();
+      ctx.restore();
+
+      // Box2
+      ctx.beginPath();
+      ctx.save();
+      ctx.fillStyle = "#5e64ff";
+      ctx.strokeStyle = "#000aff";
+      ctx.lineWidth = 2;
+      ctx.moveTo(offset + size, offset + (size/2) - 25 + moved);
+      ctx.lineTo(offset + size + 50, offset + (size/2) - 25 + moved);
+      ctx.lineTo(offset + size + 50, offset + (size/2) + 25 + moved);
+      ctx.lineTo(offset + size, offset + (size/2) + 25 + moved);
+      ctx.lineTo(offset + size, offset + (size/2) - 25 + moved);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  var accel = 0;
+
+  function calcPhysics() {
+    var angle_slider = $("div.angle input")[0];
+    var mu_slider = $("div.mu input")[0];
+    var box1_slider = $("div.box1 input")[0];
+    var box2_slider = $("div.box2 input")[0];
+
+    // Setting global values
+
+    var angle = degrees_to_radians(angle_slider.value);
+    var mu = mu_slider.value;
+
+    // Calculate values for box1
+
+    var box1_mass = Number(box1_slider.value)
+    var box1_force_gravity = box1_mass * 9.8;
+    var box1_force_gravity_x = box1_force_gravity * Math.sin(angle);
+    var box1_force_gravity_y = box1_force_gravity * Math.cos(angle);
+    var box1_force_friction = mu * box1_force_gravity_y;//, box1_force_gravity_x);
+    var box1_force_x = 0;
+
+    // Calculate values for box2
+
+    var box2_mass = Number(box2_slider.value);
+    var box2_force_gravity = box2_mass * 9.8;
+
+    accel = (box2_force_gravity - box1_force_gravity_x - box1_force_friction) / (box1_mass + box2_mass);
+    var tension = box2_force_gravity - (box1_mass * accel);
+
+    $("div.numbers").html(`Values:<br>
+      Box 1 gravity: ${box1_force_gravity.toFixed(2)} N<br>
+      Box 1 gravity x: ${box1_force_gravity_x.toFixed(2)} N<br>
+      Box 1 gravity y: ${box1_force_gravity_y.toFixed(2)} N<br>
+      Box 2 gravity: ${box2_force_gravity.toFixed(2)} N<br>
+      Friction force: ${box1_force_friction.toFixed(2)} N<br>
+      Tension force: ${tension.toFixed(2)} N<br>
+      Acceleration: ${accel.toFixed(2)} m/s/s`)
+  }
+
+  function runPhysics() {
+    calcPhysics();
+
+    var position = 0;
+    var ms = 0;
+    var interval = 50;
+    proc = window.setInterval(function(){
+      ms += interval;
+      var seconds = ms / 1000;
+      if (Math.abs(position) >= 15) {
+        console.log("pow");
+        clearInterval(proc);
+        proc = null;
+      }
+      position = (accel / 2) * Math.pow(seconds, 2);
+      console.log(seconds, (accel / 2), Math.pow(seconds, 2));
+      draw(angle, mu, box1, box2, position*10);
+    }, interval);
+  }
+</script>

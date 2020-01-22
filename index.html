@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<base href="./">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<title>Home</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width">
+	</head>
+	<body>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+			$("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+		<div class="container">
+			Use the tabs at the top to navigate through my physics calculators.
+		</div>
+	</body>
+	<footer>© MrRiptide 2020</footer>
+</html>

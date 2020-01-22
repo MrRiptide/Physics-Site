@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Gravitational Force Calculator</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://jqueryui.com/resources/demos/style.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  </head>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+$("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>-->
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+  <div class="sliders" style="float: left;">
+    <div class="mass1">
+      <span>Mass of body 1 = 10kg</span><br>
+      <input type="number" min="0" value="10" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="radius1">
+      <span>Radius of body 1 = 1m</span><br>
+      <input type="number" min="0" value="10" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="mass2">
+      <span>Mass of body 2 = 10kg</span><br>
+      <input type="number" min="0" value="1" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="radius2">
+      <span>Radius of body 2 = 1m</span><br>
+      <input type="number" min="0" value="1" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="distance">
+      <span>Distance between the masses</span><br>
+      <input type="number" min="0" value="10" step=0.1 autocomplete="off"><br>
+    </div>
+  </div>
+  <div class="buttons" style="float:left;">
+    <h3>Assign values of</h3>
+    <button onclick=setEarth()>Earth</button><br>
+    <button onclick=setMoon()>Moon</button><br>
+    <button onclick=setSun()>Sun</button><br>
+    <button onclick=setHuman()>Human</button><br>
+  </div>
+  <div class="numbers" style="float:right;"></div>
+  <br style="line-height:500%">
+  <!--<canvas style="border:1px solid red; float: right;" id="canvas" width="600" height="600"></canvas>-->
+<body>
+  <div id="dialog" title="Basic dialog" hidden>
+    <h2>Assign to</h2>
+    <button onclick=applyBody1()>Body 1</button><br>
+    <button onclick=applyBody2()>Body 2</button><br>
+  </div>
+</body>
+</html>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>-->
+<script>
+
+  function rad(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi/180);
+  }
+
+  var mass1 = 10;
+  var mass2 = 10
+  var radius1 = 1;
+  var radius2 = 1;
+  var distance = 10;
+  var gravity = 6.67430*Math.pow(10,-11);
+
+  // Mass 1 slider
+  var mass1_slider = $("div.mass1 input")[0];
+
+  mass1_slider.oninput = function() {
+    mass1 = Number(this.value);
+    runDraw();
+  }
+
+  // Mass 2 slider
+  var mass2_slider = $("div.mass2 input")[0];
+
+  mass2_slider.oninput = function() {
+    mass2 = Number(this.value);
+    runDraw();
+  }
+
+  // Radius 1 slider
+  var radius1_slider = $("div.radius1 input")[0];
+
+  radius1_slider.oninput = function() {
+    radius1 = Number(this.value);
+    runDraw();
+  }
+
+  // Radius 2 slider
+  var radius2_slider = $("div.radius2 input")[0];
+
+  radius2_slider.oninput = function() {
+    console.log(this.value);
+    radius2 = Number(this.value);
+    runDraw();
+  }
+
+  // Distance
+  var distance_slider = $("div.distance input")[0];
+
+  distance_slider.oninput = function() {
+    distance = Number(this.value);
+    runDraw();
+  }
+
+  function runDraw() {
+    draw();
+  }
+
+  runDraw();
+
+  function draw() {
+    calcPhysics();
+    var ctx = canvas.getContext('2d');
+    // Set default settings
+    ctx.lineWidth = 2;
+    ctx.save();
+
+    // Clear Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    $("div.mass1 span").html(`Mass of body 1 = ${mass1.toFixed(1)}kg`);
+    $("div.mass2 span").html(`Mass of body 2 = ${mass2.toFixed(1)}kg`);
+    $("div.radius1 span").html(`Radius of body 1 = ${radius1.toFixed(1)}m`);
+    $("div.radius2 span").html(`Radius of body 2 = ${radius2.toFixed(1)}m`);
+    $("div.distance span").html(`Distance between bodies = ${distance.toFixed(1)}m`);
+
+
+
+
+  }
+
+  function calcPhysics() {
+    var gravity_force = (gravity * mass1 * mass2) / Math.pow(radius1 + distance + radius2, 2);
+    var body1_accel = gravity_force / mass1;
+    var body2_accel = gravity_force / mass2;
+
+
+    $("div.numbers").html(`
+      Force of gravity: ${gravity_force}N<br>
+      Acceleration of body 1: ${body1_accel}m/s²<br>
+      Acceleration of body 2: ${body2_accel}m/s²`);
+  }
+
+  var tempMass = 0;
+  var tempRadius = 0;
+  function setEarth() {
+    tempMass = 5.9736 * Math.pow(10,24);
+    tempRadius = 6378000;
+    $("#dialog").dialog();
+  }
+
+  function setMoon() {
+    tempMass = 7.342 * Math.pow(10,22);
+    tempRadius = 1737400;
+    $("#dialog").dialog();
+  }
+
+  function setSun() {
+    tempMass = 1.9885 * Math.pow(10,30);
+    tempRadius = 696342000;
+    $("#dialog").dialog();
+  }
+
+  function setHuman() {
+    tempMass = 	70;
+    tempRadius = 0;
+    $("#dialog").dialog();
+  }
+
+  function applyBody1() {
+    mass1 = tempMass;
+    radius1 = tempRadius;
+    $("#dialog").dialog("close");
+    refreshValues();
+  }
+
+  function applyBody2() {
+    mass2 = tempMass;
+    radius2 = tempRadius;
+    $("#dialog").dialog("close");
+    refreshValues();
+  }
+
+  function refreshValues() {
+    mass1_slider.value = mass1;
+    mass2_slider.value = mass2;
+    radius1_slider.value = radius1;
+    radius2_slider.value = radius2;
+    distance_slider.value = distance;
+    runDraw();
+  }
+</script>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Momentum Simulation</title>
+  </head>
+  <style>
+    table {
+      float: left;
+      clear: left;
+    }
+    input {
+      max-width: 50px;
+    }
+  </style>
+  <body>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+      var rand = Math.random().toString();
+		  $("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+    <table class="controls">
+      <tr>
+        <th colspan="3">Controls</td>
+      </tr>
+      <tr>
+        <td>
+          <button onclick="addBall()">+</button>
+        </td>
+        <td>
+          <button id="toggleButton" onclick="toggle()">&#x23f8;</button>
+        </td>
+        <td>
+          <button onclick="removeBall()">-</button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="3">
+          <button onclick="reset()" style="width:100%;">RESET</button>
+        </td>
+      </tr>
+    </table>
+    <table class="data">
+      <tr>
+        <th colspan="3">Ball Data</th>
+      </tr>
+      <tr>
+        <td>Ball</td>
+        <td>Mass</td>
+        <td>Velocity</td>
+      </tr>
+      <div style="max-height: 50px;">
+        <tr class="ball1" style="display:none;">
+          <td>1</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+        <tr class="ball2" style="display:none;">
+          <td>2</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+        <tr class="ball3" style="display:none;">
+          <td>3</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+        <tr class="ball4" style="display:none;">
+          <td>4</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+        <tr class="ball5" style="display:none;">
+          <td>5</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+        <tr class="ball6" style="display:none;">
+          <td>6</td>
+          <td><input class="mass" type="number" value="1" min="0.1" step="0.1" oninput="update()" autocomplete="off">
+          <td><input class="velocity" type="number" value="5" step="0.1" max="5" min="-5" oninput="update()" autocomplete="off">
+        </tr>
+      </div>
+    </table>
+    <canvas style="border:1px solid red; float: right;" id="canvas" width="1200" height="200"></canvas>
+  </body>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  var ball_count = 1;
+  var balls = []
+  var proc = null;
+  var radius = 20;
+  var ppm = 50;
+
+  var canvas = $("canvas")[0];
+
+  function reset() {
+    balls = [];
+    for (var i = 0; i < 6; i++) {
+      var ball = {
+        position: (canvas.width / ppm) / 7 * (i+1),
+        velocity: 5,
+        mass: 1
+      };
+      balls.push(ball);
+    }
+    console.log(balls);
+    updateBalls();
+    updateData();
+    draw();
+    clearInterval(proc);
+    runPhysics();
+  }
+
+  function addBall(){
+    ball_count = Math.min(ball_count+1, 6);
+    updateBalls();
+  }
+
+  var paused = false;
+  function toggle(){
+    paused = !paused;
+    if (paused) {
+      $("#toggleButton").html("►");
+      clearInterval(proc);
+    } else {
+      $("#toggleButton").html("&#x23f8;");
+      runPhysics();
+    }
+  }
+
+  function removeBall(){
+    ball_count = Math.max(ball_count-1, 0);
+    updateBalls();
+  }
+
+  function updateBalls() {
+    for (var ball = 1; ball <= 6; ball++) {
+      if (ball <= ball_count) {
+        $(".ball" + ball.toString()).show();
+      } else {
+        $(".ball" + ball.toString()).hide();
+      }
+    }
+    draw();
+  }
+
+  var totalMoved = 0;
+  var lagCount = 0;
+  var safeCount = 0;
+
+  function runPhysics(interval = 50) {
+    console.log(`Starting new physics run at interval of ${interval}`);
+    var ms = 0;
+    var d = new Date();
+    var timestamp = d.getTime();
+    // Does literally everything
+    clearInterval(proc);
+    proc = window.setInterval(function() {
+      d = new Date();
+      var timesince = d.getTime() - timestamp;
+      timestamp = d.getTime();
+      //totalMoved += 10 * timesince / 1000;
+      //console.log(timesince);
+      for (var i = 0; i < ball_count; i++) {
+        var ball = balls[i];
+        ball.position = ball.position + (ball.velocity * timesince / 1000);
+      }
+      collisionSystem();
+      draw();
+
+      // Detect Lag
+
+      var lag = timesince - interval;
+      if (Math.abs(lag) > interval*0.1) {
+        lagCount += 1;
+        safeCount = 0;
+        console.log(`WARNING: LAG OF ${lag}MS (x${lagCount})`);
+        if (lagCount >= 5) {
+          var new_interval = (timesince + interval) / 2;
+          console.log(`WARNING: CONSISTENT INACCURACIES, CHANGING INTERVAL TO ${new_interval}(from ${interval})`);
+          clearInterval(proc);
+          runPhysics(new_interval);
+        }
+      } else {
+        lagCount = 0;
+        safeCount += 1;
+        if (safeCount >= 50) {
+          var new_interval = interval - 5;
+          console.log(`NOTE: Running well, decreasing interval to ${new_interval}(from ${interval})`);
+          clearInterval(proc);
+          runPhysics(new_interval);
+        }
+      }
+    }, interval);
+  }
+
+  function collisionSystem() {
+    var collisions = [];
+    for (i in balls) {
+      // test for each other ball
+      for (var _b = Number(i) + 1; _b < ball_count; _b++) {
+        //console.log((balls[i].position < balls[b].position + radius).toString() + (balls[i] + radius > balls[b].position).toString());
+        distance = Math.sqrt(Math.pow(balls[i].position - balls[_b].position, 2));
+        /*console.log(balls[i].position);
+        console.log(balls[b].position);*/
+        //console.log(distance)
+        if (distance <= 2*radius/ppm) {
+          console.log("collision between " + i + " and " + _b);
+          var ball1 = balls[i];
+          var ball2 = balls[_b];
+
+          ball1.position = ball2.position - 2*(radius+2)/ppm*(ball1.velocity/Math.abs(ball1.velocity));
+
+          var v1f = -1 * ball2.mass/(ball1.mass + ball2.mass) * (ball2.velocity - ball1.velocity);
+          var v2f = ball1.mass/(ball1.mass + ball2.mass) * (ball2.velocity - ball1.velocity);
+          balls[i].velocity = -v1f;
+          balls[_b].velocity = -v2f;
+          //console.log(v1f, balls[i].velocity);
+          updateData();
+        }
+      }
+
+      if (balls[i].position * ppm - radius <= 0 || balls[i].position * ppm + radius >= canvas.width) {
+        console.log("collided with wall" + i);
+        balls[i].velocity = -1 * balls[i].velocity;
+        if (balls[i].position * ppm + radius >= canvas.width) {
+          balls[i].position = (canvas.width - radius) / ppm;
+        } else if (balls[i].position * ppm - radius <= 0) {
+          balls[i].position = (radius) / ppm;
+        }
+        updateData();
+      }
+    }
+  }
+
+
+  function draw() {
+    var colors = ["#ff0000", "#ff9500", "#ffff00", "#00ff00", "#0000ff", "#ff00ff"];
+    if (canvas.getContext) {
+      var ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < ball_count; i++) {
+        var ball = balls[i];
+        ctx.beginPath();
+
+        ctx.arc(Math.round(ball.position * ppm), canvas.height / 2, radius, 0, 2*Math.PI);
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  }
+
+  function update() {
+    console.log("sa");
+    for (var i = 0; i < 6; i++) {
+      console.log(i+1, $(".ball" + (i + 1).toString() + " .mass")[0].value);
+      balls[i].velocity = Number($(".ball" + (i + 1).toString() + " .velocity")[0].value);
+      balls[i].mass = Number($(".ball" + (i + 1).toString() + " .mass")[0].value);
+    }
+  }
+
+  function updateData() {
+    console.log(balls[0].velocity, $(".ball1 .velocity")[0].value);
+    for (var i = 0; i < 6; i++) {
+      $(".ball" + (i + 1).toString() + " .velocity")[0].value = balls[i].velocity;
+      $(".ball" + (i + 1).toString() + " .mass")[0].value = balls[i].mass;
+    }
+  }
+
+  reset();
+  updateBalls();
+  runPhysics();
+  collisionSystem();
+</script>

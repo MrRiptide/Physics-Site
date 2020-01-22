@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Hanging Sign Calculator</title>
+  </head>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+$("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+  <div class="sliders" style="float: left;">
+    <div class="mass">
+      <span>Mass = 10kg</span><br>
+      <input type="range" min="1" max="100" value="10" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="gravity">
+      <span>Gravity = 9.8</span><br>
+      <input type="range" min="1" max="20" value="10" step=0.1 autocomplete="off"><br>
+    </div>
+    <div class="angles">
+      <div id="wire1">
+        <span>Wire 1 Angle = 45°</span><br>
+        <input type="range" min="0" max="89" value="45" step=0.1 autocomplete="off"><br>
+      </div>
+      <div id="wire2">
+        <span>Wire 2 Angle = 45°</span><br>
+        <input type="range" min="0" max="89" value="45" step=0.1 autocomplete="off"><br>
+      </div>
+    </div>
+    <div class="forces" hidden>
+      <div id="wire1">
+        <span>Wire 1 Force = 10N</span><br>
+        <input type="range" min="1" max="500" value="10" step=0.1 autocomplete="off"><br>
+      </div>
+      <div id="wire2">
+        <span>Wire 2 Force = 10N</span><br>
+        <input type="range" min="1" max="500" value="10" step=0.1 autocomplete="off"><br>
+      </div>
+    </div>
+  </div>
+  <div class="buttons" style="float:left;">
+    <button id="toggleMode" onclick=toggleMode() disabled>Angle Mode</button><br>
+  </div>
+  <div class="numbers" style="float:left;"><!--Values go here--></div>
+  <br style="line-height:500%">
+  <canvas style="border:1px solid red; float: right;" id="canvas" width="600" height="600"></canvas>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+
+  function rad(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi/180);
+  }
+
+  var mass = 10;
+  var gravity = 9.8;
+  var wire_1_angle = 45;
+  var wire_2_angle = 45;
+  var wire_1_force = 10;
+  var wire_2_force = 10;
+  var angleMode = true;
+
+  function toggleMode() {
+    angleMode = !angleMode;
+    console.log(angleMode);
+    $(".angles").prop("hidden", !angleMode);
+    $(".forces").prop("hidden", angleMode);
+    if (angleMode) {
+      $(".buttons #toggleMode").html("Angle Mode");
+    } else {
+      $(".buttons #toggleMode").html("Forces Mode");
+    }
+  }
+
+  // Mass slider
+  var mass_slider = $("div.mass input")[0];
+
+  mass_slider.oninput = function() {
+    mass = Number(this.value);
+    runDraw();
+  }
+
+  // Gravity slider
+  var gravity_slider = $("div.gravity input")[0];
+
+  gravity_slider.oninput = function() {
+    gravity = Number(this.value);
+    runDraw();
+  }
+
+  // Wire 1 force slider
+  var wire_1_force_slider = $("div.forces #wire1 input")[0];
+
+  wire_1_force_slider.oninput = function() {
+    wire_1_force = Number(this.value);
+    runDraw();
+  }
+
+  // Wire 2 force slider
+  var wire_2_force_slider = $("div.forces #wire2 input")[0];
+
+  wire_2_force_slider.oninput = function() {
+    wire_2_force = Number(this.value);
+    runDraw();
+  }
+
+  // Wire 1 angle slider
+  var wire_1_angle_slider = $("div.angles #wire1 input")[0];
+
+  wire_1_angle_slider.oninput = function() {
+    wire_1_angle = Number(this.value);
+    runDraw();
+  }
+
+  // Wire 2 angle slider
+  var wire_2_angle_slider = $("div.angles #wire2 input")[0];
+
+  wire_2_angle_slider.oninput = function() {
+    wire_2_angle = Number(this.value);
+    runDraw();
+  }
+
+  function runDraw() {
+    draw();
+  }
+
+  runDraw();
+
+  function draw() {
+    calcPhysics();
+    var ctx = canvas.getContext('2d');
+    // Set default settings
+    ctx.lineWidth = 2;
+    ctx.save();
+
+    // Clear Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    $("div.mass span").html(`Mass = ${mass}kg`);
+    $("div.gravity span").html(`Gravity = ${gravity}`);
+    $("div.angles #wire1 span").html(`Wire 1 Angle = ${wire_1_angle.toFixed(1)}°`);
+    $("div.angles #wire2 span").html(`Wire 2 Angle = ${wire_2_angle.toFixed(1)}°`);
+    $("div.forces #wire1 span").html(`Wire 1 Force = ${wire_1_force.toFixed(1)}N`);
+    $("div.forces #wire2 span").html(`Wire 2 Force = ${wire_2_force.toFixed(1)}N`);
+
+    // Draws forces
+    ctx.beginPath();
+    ctx.save();
+    ctx.moveTo(50, 50);
+    ctx.lineTo(canvas.width / 2, canvas.height / 2);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.save();
+    ctx.moveTo(canvas.width - 50, 50);
+    ctx.lineTo(canvas.width / 2, canvas.height / 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Draws mass
+    ctx.beginPath();
+    ctx.save();
+    ctx.rect((canvas.width / 2) - 25, canvas.height / 2, 50, 50);
+    ctx.stroke();
+    ctx.font = "16px Arial";
+    ctx.fillText(`${mass.toFixed(1)}kg`, (canvas.width / 2) - 24, canvas.height / 2 + 31);
+    ctx.restore();
+
+    // Draws angle measurements
+    ctx.beginPath();
+    ctx.save();
+    ctx.arc(50, 50, 20, 0, rad(45));
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillText(`${wire_1_angle.toFixed(1)}°`, 50, 50);
+
+    ctx.beginPath();
+    ctx.save();
+    ctx.arc(canvas.width - 50, 50, 20, Math.PI - rad(45), Math.PI);
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillText(`${wire_2_angle.toFixed(1)}°`, canvas.width - 70, 50);
+
+
+  }
+
+  function calcPhysics() {
+    if (angleMode) {
+      wire_1_force = (mass * gravity) / (Math.cos(rad(wire_1_angle))*Math.tan(rad(wire_2_angle))+Math.sin(rad(wire_1_angle)));
+      wire_2_force = (wire_1_force * Math.cos(rad(wire_1_angle))) / (Math.cos(rad(wire_2_angle)));
+      console.log(wire_1_force, wire_2_force);
+    }
+
+
+    $("div.numbers").html(`
+      Wire 1:
+      <ul style="margin-top: 0px">
+       ‍ <li>Angle: ${wire_1_angle.toFixed(1)}°</li>
+       ‍ <li>Force: ${wire_1_force.toFixed(1)}N<br></li>
+      </ul>
+      Wire 2:
+      <ul style="margin-top: 0px">
+       ‍ <li>Angle: ${wire_2_angle.toFixed(1)}°</li>
+       ‍ <li>Force: ${wire_2_force.toFixed(1)}N</li>
+      </ul>`);
+  }
+</script>

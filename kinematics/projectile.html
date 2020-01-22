@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Projectile Simulation</title>
+  </head>
+  <style>
+
+  </style>
+	<!--Navigation bar-->
+	<div id="nav-placeholder">
+
+	</div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+	$(function(){
+	  var rand = Math.random().toString();
+$("#nav-placeholder").load("./nav.html?v="+rand);
+	});
+	</script>
+  <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+  <script>
+    // Removes javascript warning if javascript is enabled
+
+    $(".JS_warning").remove();
+  </script>
+  <body>
+    <div class="output" style="float: right; width: 80%;"><canvas style="width:100%">This browser is not supported(canvas)</canvas></div>
+    <div class="input">
+      <table>
+        <tr>
+          <th colspan="2">Projectile Info</th>
+        </tr>
+        <tr>
+          <td>Velocity (m/s)</td>
+          <td><input id="vel" type="number" value="10" min="1" step="1"></td>
+        </tr>
+        <tr>
+          <td>Angle (°)</td>
+          <td><input id="angle" type="number" value="45" min="0" max="90" step="0.1"></td>
+        </tr>
+        <tr>
+          <td colspan="2"><button onclick="send()" style="width:100%;">Send</button></td>
+        </tr>
+      </table>
+      <br>
+      <table>
+        <tr>
+          <td>Pixels Per Meter</td>
+          <td><input id="ppm" type="number" value="100" min="1" max="500" step="1" onchange="update()"></td>
+        </tr>
+        <tr>
+          <td colspan="2"><button style="width:100%" onclick="clearProjectiles()">Clear Projectiles</button></td>
+        </tr>
+        <tr>
+          <td colspan="2"><button id="toggle" style="width:100%" onclick="toggle()">⏸</button></td>
+        </tr>
+    </div>
+  </body>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  var canvas = $("canvas")[0];
+  var projectiles = [];
+  var proc = null;
+  var ppm = 100;
+
+  function rad(angle) {
+    console.log(angle / 180 * Math.PI);
+    return angle / 180 * Math.PI;
+  }
+
+  function send() {
+    var vel = $("#vel")[0].value;
+    var angle = $("#angle")[0].value;
+
+    var x_vel = vel * Math.cos(rad(angle));
+    var y_vel = vel * Math.sin(rad(angle));
+
+    var proj = {
+      x: 50,
+      y: canvas.height - 50,
+      x_vel: x_vel,
+      y_vel: y_vel
+    }
+
+    console.log("x: " + proj.x + "\ny: " + proj.y);
+
+    projectiles.push(proj);
+  }
+
+  function runPhysics() {
+    if (proc != null) {
+      clearInterval(proc);
+    }
+
+    var interval = 1;
+    proc = window.setInterval(function() {
+      if (canvas.getContext) {
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        //console.log(projectiles);
+        for (proj of projectiles) {
+          proj.x += proj.x_vel * (interval / 1000) * ppm;
+          proj.y -= proj.y_vel * (interval / 1000) * ppm;
+          //console.log("x: " + proj.x + "y: " + proj.y + "\nwidth: " + canvas.width + "    height: " + canvas.height);
+
+          proj.y_vel -= 9.8 * (interval / 1000);
+
+          if (proj.x >= ctx.width || proj.y >= canvas.height) {
+            console.log("projectile offscreen")
+            projectiles = $.grep(projectiles, function (val) {
+              return val != proj;
+            });
+            console.log(projectiles);
+          }
+
+          ctx.beginPath();
+          ctx.arc(proj.x, proj.y, 5, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      }
+    }, interval);
+  }
+
+  function fixCanvas() {
+    /// get computed style for image
+    var output = $(".output")[0];
+    var cs = getComputedStyle(output);
+
+    /// these will return dimensions in *pixel* regardless of what
+    /// you originally specified for image:
+    var width = parseInt(cs.getPropertyValue("width"), 10);
+    var height = parseInt(cs.getPropertyValue("height"), 10);
+
+    /// now use this as width and height for your canvas element:
+    var canvas = $("canvas")[0];
+
+    canvas.width = width;
+    canvas.height = height;
+  }
+  window.onresize = fixCanvas;
+
+  function toggle() {
+    if (proc == null) {
+      $("#toggle").html("⏸");
+      runPhysics();
+    } else {
+      $("#toggle").html("►");
+      clearInterval(proc);
+      proc = null;
+    }
+  }
+
+  function clearProjectiles() {
+    console.log("eyerte");
+    projectiles = [];
+    console.log(projectiles);
+  }
+
+  function update() {
+    ppm = Number($("#ppm")[0].value);
+  }
+
+  runPhysics();
+  fixCanvas();
+</script>

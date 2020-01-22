@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Angular Momentum Simulation</title>
+  </head>
+  <style>
+  table {
+    background-color:#aaa;
+    min-width: 325px;
+  }
+
+  th {
+    background-color: #666;
+  }
+
+  td {
+      min-width: 60px;
+  }
+
+  .input {
+    float: left;
+  }
+  .output {
+    float: right;
+  }
+  .val {
+    min-width: 75px;
+  }
+  </style>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+$("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+  <div class="input" style="float: left;">
+    <table class="rod">
+      <th colspan=3>Rod</th>
+      <tr id="mass">
+        <td>Mass</td>
+        <td><input type="range" min="0.1" max="100" value="5" step="0.1" autocomplete="off"></td>
+        <td class="val">50 kg</td>
+      </tr>
+      <tr id="length">
+        <td>Length</td>
+        <td><input type="range" min="0.1" max="10" value="2" step="0.1" autocomplete="off"></td>
+        <td class="val">10 m</td>
+      </tr>
+    </table>
+    <table class="body">
+      <th colspan=3>Body</th>
+      <tr id="mass">
+        <td>Mass</td>
+        <td><input type="range" min="0.1" max="100" value="5" step="0.1" autocomplete="off"></td>
+        <td class="val">50 kg</td>
+      </tr>
+      <tr id="distance">
+        <td>Distance</td>
+        <td><input type="range" min="0.1" max="10" value="2" step="0.1" autocomplete="off"></td>
+        <td class="val">10 m</td>
+      </tr>
+      <tr id="velocity">
+        <td>Velocity<br>(angular)</td>
+        <td><input type="range" min="0.1" max="100" value="10" step="0.1" autocomplete="off"></td>
+        <td class="val">10 rad/s</td>
+      </tr>
+    </table>
+    <table class="values">
+      <th colspan=2>Values</th>
+      <tr id="rod_inertia">
+        <td>Rod Inertia</td>
+        <td class="val"></td>
+      </tr>
+      <tr id="box_inertia">
+        <td>Box Inertia</td>
+        <td class="val"></td>
+      </tr>
+      <tr id="momentum">
+        <td>Momentum</td>
+        <td class="val"></td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <td>
+          <button id="togglePhysics" onclick="togglePhysics()" style="display: block; margin: 0 auto;">Run Physics</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div class="output" style="float:right;">
+    <p></p>
+    <canvas style="border:1px solid red; float: right;" id="canvas" width="600" height="600"></canvas>
+  </div>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  function rad(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi/180);
+  }
+  function deg(radians) {
+    var pi = Math.PI;
+    return radians * (180/pi);
+  }
+
+  // Calculate new values on each update
+  var inputs = $("input")
+  for (elem of inputs) {
+    elem.oninput = function(e) {
+      calcPhysics($(e.srcElement)[0]);
+      if (proc == null) {
+        draw(0);
+      }
+    }
+  }
+
+  var r_mass;
+  var r_length;
+  var r_inertia;
+  var b_mass;
+  var b_distance;
+  var b_inertia;
+  var momentum;
+  var velocity;
+
+  var proc;
+
+// Functions to call initially
+
+  calcPhysics();
+  applyValues();
+  draw(0);
+
+  function updateValues() {
+    pullFromSliders();
+    applyToText();
+  }
+
+  function applyValues() {
+    applyToText();
+    applyToSliders();
+  }
+
+  function pullFromSliders() {
+    r_mass = Number($(".rod #mass input")[0].value);
+    b_mass = Number($(".body #mass input")[0].value);
+    r_length = Number($(".rod #length input")[0].value);
+    b_distance = Number($(".body #distance input")[0].value);
+    velocity = Number($(".body #velocity input")[0].value);
+  }
+
+  function applyToSliders() {
+    $(".rod #mass input")[0].value = r_mass;
+    $(".body #mass input")[0].value = b_mass;
+    $(".rod #length input")[0].value = r_length;
+    $(".body #distance input")[0].value = b_distance;
+    $(".body #velocity input")[0].value = velocity;
+  }
+
+  function applyToText() {
+    $(".rod #mass .val").html(`${r_mass.toFixed(1)} kg`);
+    $(".body #mass .val").html(`${b_mass.toFixed(1)} kg`);
+    $(".rod #length .val").html(`${r_length.toFixed(1)} m`);
+    $(".body #distance .val").html(`${b_distance.toFixed(1)} m`);
+    $(".body #velocity .val").html(`${velocity.toFixed(1)} rad/s`);
+    $(".values #rod_inertia .val").html(`${r_inertia.toFixed(1)} kg*m<sup>2</sup>`);
+    $(".values #box_inertia .val").html(`${b_inertia.toFixed(1)} kg*m<sup>2</sup>`);
+    $(".values #momentum .val").html(`${momentum.toFixed(1)} kg*m<sup>2</sup>/s`);
+    $(".body #distance input").prop("max", r_length);
+  }
+
+  function calcPhysics(changed) {
+    pullFromSliders();
+    r_inertia = 1/3*r_mass*Math.pow(r_length, 2);
+    b_inertia = b_mass * Math.pow(b_distance, 2);
+    if (proc != null) {
+      console.log("I should be conserving momentum now");
+      var new_momentum = (r_inertia + b_inertia) * velocity;
+      if (momentum != new_momentum) {
+        if (changed == $(".body #velocity input")[0]) {
+          // If velocity changed
+          if (momentum < new_momentum) {
+            // If greater then decrease distance
+            if (((1/3*r_mass)+b_mass)*Math.pow(b_distance, 2)*velocity >= momentum) {
+              r_length = Math.sqrt(momentum/((1/3*r_mass + b_mass)*velocity));
+              b_distance = r_length;
+            } else {
+              r_length = Math.sqrt((momentum - b_mass*Math.pow(b_distance, 2)*velocity)/(1/3*r_mass*velocity));
+            }
+          } else {
+            // If less then increase distance
+            if (((1/3*r_mass)+b_mass)*Math.pow(r_length, 2)*velocity <= momentum) {
+              r_length = Math.sqrt(momentum/(((1/3*r_mass) + b_mass)*velocity));
+              b_distance = r_length;
+            } else {
+              b_distance = Math.sqrt((momentum - 1/3*r_mass*Math.pow(r_length, 2)*velocity)/(b_mass*velocity));
+            }
+          }
+        } else {
+          velocity = momentum / (1/3*r_mass*Math.pow(r_length, 2) + b_mass*Math.pow(b_distance, 2));
+        }
+      }
+    }
+    else {
+      momentum = (r_inertia + b_inertia) * velocity;
+    }
+    applyValues();
+  }
+
+  function draw(angle=0) {
+    var canvas = $(".output canvas")[0];
+    if (canvas.getContext) {
+      // initialize ctx
+      var ctx = canvas.getContext("2d");
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // center of canvas
+      var hcenter = canvas.width / 2;
+      var vcenter = canvas.height / 2;
+
+      var ppm = (Math.min(canvas.width, canvas.height)-20) / 2 / 10;
+
+      ctx.save();
+      ctx.beginPath();
+
+      ctx.lineWidth = Math.log10(r_mass)*10;
+      ctx.lineCap = "round";
+
+      ctx.moveTo(hcenter, vcenter);
+      ctx.lineTo(hcenter + (ppm*r_length)*Math.cos(angle), vcenter + (ppm*r_length)*Math.sin(angle));
+
+      ctx.stroke();
+
+      ctx.restore();
+      ctx.save();
+
+      ctx.beginPath();
+      ctx.arc(hcenter + (ppm*b_distance)*Math.cos(angle), vcenter + (ppm*b_distance)*Math.sin(angle), Math.max(Math.log10(b_mass)*15, 0.1), 0, 2*Math.PI);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function togglePhysics() {
+    if ($("#togglePhysics").html() == "Run Physics"){
+      runPhysics();
+      $("#togglePhysics").html("Stop Physics");
+    } else if ($("#togglePhysics").html() == "Stop Physics") {
+      clearInterval(proc);
+      proc = null;
+      $("#togglePhysics").html("Run Physics");
+    }
+  }
+
+  function runPhysics() {
+    if (proc != null) {
+      clearInterval(proc);
+    }
+
+    draw();
+    calcPhysics();
+    var interval = 10;
+    var angle = 0;
+    proc = window.setInterval(function(){
+      angle += (interval/1000)*velocity;
+      draw(angle);
+    }, interval);
+  }
+</script>

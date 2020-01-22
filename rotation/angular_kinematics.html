@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Angular Kinematics Calculator</title>
+  </head>
+  <style>
+  .invalid {
+    color: red;
+  }
+  .changed {
+    color: orange;
+  }
+  .missing {
+    color: grey;
+  }
+  .error {
+    background-color: red;
+  }
+  .info {
+    background-color: #80fffb;
+  }
+  </style>
+		<!--Navigation bar-->
+		<div id="nav-placeholder">
+
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+		$(function(){
+		  var rand = Math.random().toString();
+      $("#nav-placeholder").load("./nav.html?v="+rand);
+		});
+		</script>
+    <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+    <script>
+      // Removes javascript warning if javascript is enabled
+
+      $(".JS_warning").remove();
+    </script>
+  <table>
+    <td>
+      <table class="general" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+        <tr style="background-color:#aaa;">
+          <th colspan="3">General</th>
+        </tr>
+        <tr id="radius">
+          <td>Radius:</td>
+          <td><input type="number" min="0" value="10" step=0.1 autocmp style="float:right;"></td>
+          <td><button onclick="toggle('#radius')">T</button></td>
+        </tr>
+        <tr id="seconds">
+          <td>Seconds:</td>
+          <td><input type="number" min="0" value="3" step=0.1 autocmp style="float:right;"></td>
+          <td><button onclick="toggle('#seconds')">T</button></td>
+        </tr>
+        <tr>
+          <td>Angle Units:</td>
+          <td>
+            <select id="units">
+              <option value="rad">Radians</option>
+              <option value="rev">Revolutions</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td id="alert" class="info" style="width:275px; text-align:center;">
+    </td>
+  </table>
+  <table class="initial" style="background-color:#eee; clear:left;">
+    <tr>
+      <th colspan="4" style="background-color:#999">Initial</th>
+    </tr>
+    <tr>
+      <td>
+        <table class="angular" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+          <tr style="background-color:#aaa;">
+            <th colspan="3">Angular</th>
+          </tr>
+          <tr id="a_pos">
+            <td>Angle:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;" oninput="onUpdate('.initial #a_pos input')"></td>
+            <td><button onclick="toggle('.initial #a_pos')">T</button></td>
+          </tr>
+          <tr id="a_vel">
+            <td>Velocity:</td>
+            <td><input type="number" value="10" step=0.1 autocmp style="float:right;" oninput="onUpdate('.initial #a_vel input')"></td>
+            <td><button onclick="toggle('.initial #a_vel')">T</button></td>
+          </tr>
+          <tr id="a_accel">
+            <td>Acceleration:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;"></td>
+            <td><button onclick="toggle('.initial #a_accel')">T</button></td>
+          </tr>
+        </table>
+      </td>
+      <td>
+        <table class="linear" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+          <tr style="background-color:#aaa;">
+            <th colspan="3">Linear</th>
+          </tr>
+          <tr id="l_pos">
+            <td>Position:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.initial #l_pos')">T</button></td>
+          </tr>
+          <tr id="l_vel">
+            <td>Velocity:</td>
+            <td><input type="number" value="100" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.initial #l_vel')">T</button></td>
+          </tr>
+          <tr id="l_accel">
+            <td>Acceleration:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.initial #l_accel')">T</button></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table class="final" style="background-color:#eee; clear:left;">
+    <tr>
+      <th colspan="4" style="background-color:#999">Final</th>
+    </tr>
+    <tr>
+      <td>
+        <table class="angular" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+          <tr style="background-color:#aaa;">
+            <th colspan="3">Angular</th>
+          </tr>
+          <tr id="a_pos">
+            <td>Angle:</td>
+            <td><input type="number" value="30" step=0.1 autocmp style="float:right;"></td>
+            <td><button onclick="toggle('.final #a_pos')">T</button></td>
+          </tr>
+          <tr id="a_vel">
+            <td>Velocity:</td>
+            <td><input type="number" value="10" step=0.1 autocmp style="float:right;"></td>
+            <td><button onclick="toggle('.final #a_vel')">T</button></td>
+          </tr>
+          <tr id="a_accel">
+            <td>Acceleration:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;"></td>
+            <td><button onclick="toggle('.final #a_accel')">T</button></td>
+          </tr>
+        </table>
+      </td>
+      <td>
+        <table class="linear" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+          <tr style="background-color:#aaa;">
+            <th colspan="3">Linear</th>
+          </tr>
+          <tr id="l_pos">
+            <td>Position:</td>
+            <td><input type="number" value="300" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.final #l_pos')">T</button></td>
+          </tr>
+          <tr id="l_vel">
+            <td>Velocity:</td>
+            <td><input type="number" value="100" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.final #l_vel')">T</button></td>
+          </tr>
+          <tr id="l_accel">
+            <td>Acceleration:</td>
+            <td><input type="number" value="0" step=0.1 autocmp style="float:right;" disabled></td>
+            <td><button onclick="toggle('.final #l_accel')">T</button></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table class="">
+  <button class="mode" onclick="calcPhysics()" style="float:left; clear:left; margin:5px;">Calculate</button>
+  <div class="numbers" style="float:right;"></div>
+  <br style="line-height:500%">
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  function rad(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi/180);
+  }
+
+  var radius = 10;
+  var seconds = 3;
+  var a_vel = 10;
+  var a_accel = 0;
+  var l_vel = 10;
+  var l_accel = 0;
+
+  var angleMode = true;
+
+  for (a of [".initial", ".final"]) {
+    for (b of [" #a_", " #l_"]) {
+      for (c of ["pos", "vel", "accel"]) {
+        var elem = $(a + b + c + " input")[0];
+        //console.log(a + b + c);
+        //console.log(elem);
+        var _e = String(a + b + c + " input");
+        //$(a + b + c + " input")[0].prop("oninput", `onUpdate("${e}")`);
+        elem.oninput = function(e) {
+            var elem = e.srcElement;
+            $(elem).removeClass("disabled");
+            $(elem).removeClass("missing");
+            $(elem).removeClass("invalid");
+            //runDraw();
+        }
+      }
+    }
+  }
+
+  function getVal(input) {
+    var conversion = 1;
+    if ($("#units").value == "rev") {
+      conversion = 2 * Math.PI;
+    }
+    if (!input.includes("input")){
+        input += " input";
+    }
+    console.log(input + " = " + String(Number($(input)[0].value) * conversion));
+    return Number($(input)[0].value) * conversion;
+  }
+
+  function setVal(input, val) {
+    var conversion = 1;
+    if ($("#units").value == "rev") {
+      conversion = 2 * Math.PI;
+    }
+    if (!input.includes("input")){
+        input += " input";
+    }
+    $(input).removeClass("disabled");
+    $(input).removeClass("missing");
+    $(input).removeClass("invalid");
+
+    if (getVal(input) == val) {
+      return;
+    }
+    $(input)[0].value = val / conversion;
+    $(input).addClass("changed");
+  }
+
+  function toggle(input) {
+    if (!input.includes("input")){
+        input += " input";
+    }
+    var element = $(input);
+    if (input.includes("#a")) {
+      var opp = (input).replace("#a", "#l");
+    } else if (input.includes("#l")) {
+      var opp = (input).replace("#l", "#a");
+    }
+    var opp_element = $(opp);
+    element.prop("disabled", !isDisabled(input));
+    opp_element.prop("disabled", true);
+  }
+
+  function isDisabled(input) {
+    console.log(input);
+    if (!input.includes("input")){
+        input += " input";
+    }
+    var element = $(input);
+    console.log(input);
+    console.log(element);
+    if (element.length) {
+      if (element.attr("disabled") == "disabled") {
+        return true;
+      } else if (element.attr("disabled") == null) {
+        return false;
+      }
+    } else {
+      throw "Invalid element name";
+    }
+  }
+
+  // Radius slider
+  var radius_slider = $("#radius input")[0];
+
+  radius_slider.oninput = function() {
+    radius = Number(this.value);
+  }
+
+  // Seconds slider
+  var seconds_slider = $("#seconds input")[0];
+
+  seconds_slider.oninput = function() {
+    seconds = Number(this.value);
+  }
+
+  function runDraw() {
+    draw();
+  }
+
+  function draw() {
+    calcPhysics();
+  }
+
+  function calcPhysics() {
+    if (!isDisabled("#radius")) {
+      for (a of [".initial", ".final"]) {
+        for (b of ["pos", "vel", "accel"]) {
+          if (!isDisabled(a + " #a_" + b + " input")) {
+            // Angular
+            var a_val = getVal(a + " #a_" + b + " input");
+            var l_val = a_val * radius;
+            setVal(a + " #l_" + b + " input", l_val);
+          } else if (!isDisabled(a + " #l_" + b + " input")) {
+            // Linear
+            var l_val = getVal(a + " #l_" + b + " input");
+            var a_val = l_val / radius;
+            setVal(a + " #a_" + b + " input", a_val);
+          } else {
+            // Neither
+            $(a + " #a_" + b + " input").addClass("missing");
+            $(a + " #l_" + b + " input").addClass("missing");
+          }
+        }
+      }
+      var _i_pos = !isDisabled(".initial #a_pos") || !isDisabled(".initial #l_pos");
+      var _i_vel = !isDisabled(".initial #a_vel") || !isDisabled(".initial #l_vel");
+      var _f_pos = !isDisabled(".final #a_pos") || !isDisabled(".final #l_pos");
+      var _f_vel = !isDisabled(".final #a_vel") || !isDisabled(".final #l_vel");
+      var _accel = !isDisabled(".initial #a_accel") || !isDisabled(".initial #l_accel") || !isDisabled(".final #a_accel") || !isDisabled(".final #l_accel");
+      var _seconds = !isDisabled("#seconds");
+      var _radius = !isDisabled("#radius");
+
+      var init_pos = getVal(".initial #a_pos");
+      var init_vel = getVal(".initial #a_vel");
+      var final_pos = getVal(".final #a_pos");
+      var final_vel = getVal(".final #a_vel");
+      var accel = getVal(".initial #a_accel");
+
+      var time = Number($("#seconds input")[0].value);
+      console.log($("#seconds input")[0].value);
+      console.log($("#seconds input"));
+
+      var madeCalc = false;
+
+      if (_seconds) {
+        if (_i_vel && _f_vel) {
+          console.log("_i_vel && _f_vel");
+          accel = (final_vel - init_vel) / time;
+          console.log(final_vel);
+          console.log(init_vel);
+          console.log(time);
+          console.log(accel);
+          setVal(".initial #a_accel", accel);
+          setVal(".final #a_accel", accel);
+          madeCalc = true;
+        }
+
+        // Know all of Initial
+        if (_i_pos && _i_vel && _accel) {
+          console.log("_i_pos && _i_vel && _accel");
+          final_pos = init_pos + init_vel * time + 0.5 * accel * Math.pow(time, 2);
+          final_vel = init_vel + accel * time;
+
+          setVal(".final #a_pos", final_pos);
+          setVal(".final #a_vel", final_vel);
+          madeCalc = true;
+        }
+
+        // Don't know acceleration
+        if (_i_pos && _i_vel && !_accel) {
+          console.log("_i_pos && _i_vel");
+          if (_f_vel) {
+            // so make acceleration
+            accel = (final_vel - init_vel) / time;
+            setVal(".initial #a_accel", accel);
+            setVal(".final #a_accel", accel);
+
+            final_pos = init_pos + init_vel * time + 0.5 * accel * Math.pow(time, 2);
+            setVal(".final #a_pos", final_pos);
+          } else if (_f_pos) {
+            avg_vel = (final_pos - init_pos) / time;
+            accel = 2 * (avg_vel - init_vel) / time;
+            setVal(".initial #a_accel", accel);
+            setVal(".final #a_accel", accel);
+
+            final_vel = init_vel + accel * time;
+            setVal(".final #a_vel", final_vel);
+          } else {
+            accel = 0;
+
+            final_pos = init_pos + init_vel * time + 0.5 * accel * Math.pow(time, 2);
+            setVal(".final #a_pos", final_pos);
+          }
+          madeCalc = true;
+        }
+
+        // Don't know initial Position
+        if (_f_pos && _accel && !_i_pos) {
+          console.log("_f_pos && _accel");
+          if (_f_vel && !_i_vel) {
+            init_vel = final_vel - (accel * time);
+            setVal(".initial #a_vel", init_vel);
+          }
+          if (_f_vel || _i_vel) {
+            init_pos = final_pos - init_vel*time - 0.5*accel*Math.pow(time, 2);
+            setVal(".initial #a_pos", init_pos);
+            madeCalc = true;
+          }
+        }
+
+        if (_i_pos && _f_pos && !_i_vel && !_f_vel) {
+          console.log("_i_pos && _f_pos && !_i_vel && !_f_vel");
+          var vel = (final_pos - init_pos) / time;
+
+          setVal(".initial #a_vel", vel);
+          setVal(".final #a_vel", vel);
+          setVal(".initial #a_accel", 0);
+          setVal(".final #a_accel", 0);
+          madeCalc = true;
+        }
+      } else {
+        // If time not provided
+        if (_i_vel && _f_vel && _accel) {
+          console.log("_i_vel && _f_vel && _accel");
+          time = (final_vel - init_vel) / accel;
+          setVal("#seconds", time);
+          if (_i_pos) {
+            final_pos = init_pos + init_vel * time + 0.5 * accel * Math.pow(time, 2);
+            setVal(".initial #a_pos", final_pos);
+          }
+          madeCalc = true;
+        }
+
+        if (_i_pos && _f_pos && (_i_vel || _f_vel)) {
+          console.log("_i_pos && _f_pos && (_i_vel || _f_vel)");
+          if (_i_vel){
+            var vel = init_vel;
+          } else {
+            var vel = final_vel;
+          }
+          time = (final_pos - init_pos) / vel;
+          setVal("#seconds", time);
+          setVal(".initial #a_vel", vel);
+          setVal(".final #a_vel", vel);
+          madeCalc = true;
+        }
+      }
+
+  /*
+      setVal(".initial #a_pos", init_pos);
+      setVal(".final #a_pos", final_pos);
+      setVal(".initial #a_vel", init_vel);
+      setVal(".final #a_vel", final_vel);
+      setVal(".initial #a_accel", accel);
+      setVal(".final #a_accel", accel);
+  */
+    } else {
+      if (!isDisabled(".initial #l_vel") && !isDisabled(".final #l_vel") && !isDisabled("#seconds") && (!isDisabled(".initial #a_accel") || !isDisabled(".final #a_accel"))) {
+        var init_vel = getVal(".initial #l_vel");
+        var final_vel = getVal(".final #l_vel");
+        var time = getVal("#seconds");
+        if (!isDisabled(".initial #a_accel")) {
+          var accel = getVal(".initial #a_accel");
+        } else {
+          var accel = getVal(".final #a_accel");
+        }
+        radius = (final_vel - init_vel) / (time * accel);
+        if (!isDisabled(".initial #a_pos")) {
+          var final_pos = getVal(".initial #a_pos") + init_vel*time + 0.5 * accel * Math.pow(time, 2);
+
+        }
+        setVal("#radius", radius);
+        madeCalc = true;
+      }
+      if (madeCalc) {
+        for (a of [".initial", ".final"]) {
+          for (b of ["pos", "vel", "accel"]) {
+            if (!isDisabled(a + " #l_" + b + " input")) {
+              // Linear
+              var l_val = getVal(a + " #l_" + b + " input");
+              var a_val = l_val / radius;
+              setVal(a + " #a_" + b + " input", a_val);
+            }
+          }
+        }
+      }
+    }
+
+    if (!madeCalc) {
+      $("#alert").html("Not enough information / calculations not programmed yet");
+      $("#alert").removeClass();
+      $("#alert").addClass("error");
+    } else {
+      $("#alert").html("Values calculated");
+      $("#alert").removeClass();
+      $("#alert").addClass("info");
+    }
+
+    // Reapplies to linear
+    for (a of [".initial", ".final"]) {
+      for (b of ["pos", "vel", "accel"]) {
+        console.log(a + " #a_" + b + " input");
+        console.log($(a + " #a_" + b + " input"));
+        console.log($(a + " #a_" + b + " input").attr("class"));
+        $(a + " #a_" + b + " input").addClass("yeet");
+        if (!isDisabled(a + " #a_" + b + " input") || $(a + " #a_" + b + " input").attr("class").includes("changed")) {
+          // Angular
+          var a_val = getVal(a + " #a_" + b + " input");
+          var l_val = a_val * radius;
+          setVal(a + " #l_" + b + " input", l_val);
+        }
+      }
+    }
+  }
+</script>
