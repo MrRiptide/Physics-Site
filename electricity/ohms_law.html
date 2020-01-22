@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <base href="../">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Ohms Law Calculator</title>
+  </head>
+  <style>
+
+  </style>
+	<!--Navigation bar-->
+	<div id="nav-placeholder">
+
+	</div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+	$(function(){
+	  var rand = Math.random().toString();
+    $("#nav-placeholder").load("./nav.html?v="+rand);
+	});
+	</script>
+  <div class="JS_warning">The website is either loading or javascript is not enabled. If this message doesn't go away before the rest of the page loads, make sure javascript is enabled.</div>
+  <script>
+    // Removes javascript warning if javascript is enabled
+
+    $(".JS_warning").remove();
+  </script>
+  <table class="general" style="float: left; clear:left; background-color: #ddd; min-width:275px;">
+    <tr style="background-color:#aaa;">
+      <th colspan="3">Ohm's Law</th>
+    </tr>
+    <tr id="voltage">
+      <td>Voltage</td>
+      <td><input class="data" type="number" min="0" value="10" step=0.1 autocomplete="off" style="float:right;"></td>
+      <td><button class="select" onclick="select('voltage')">X</button></td>
+    </tr>
+    <tr id="current">
+      <td>Current</td>
+      <td><input class="data" type="number" min="0" value="5" step=0.1 autocomplete="off" style="float:right;" disabled></td>
+      <td><button class="select" onclick="select('current')">X</button></td>
+    </tr>
+    <tr id="resistance">
+      <td>Resistance</td>
+      <td><input class="data" type="number" min="0" value="2" step=0.1 autocomplete="off" style="float:right;"></td>
+      <td><button class="select" onclick="select('resistance')">X</button></td>
+    </tr>
+  </table>
+  <button class="mode" onclick="calc()" style="float:left; clear:left; margin:5px;">Calculate</button>
+  <div class="numbers" style="float:right;"></div>
+  <br style="line-height:500%">
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+  function select(selected) {
+    options = ["voltage", "current", "resistance"];
+    for (option of options) {
+      $(`#${option} .data`).prop("disabled", false);
+    }
+    $(`#${selected} .data`).prop("disabled", true);
+  }
+
+  function calc() {
+    var voltage = $("#voltage .data");
+    var current = $("#current .data");
+    var resistance = $("#resistance .data");
+
+    if (voltage.attr("disabled") == "disabled") {
+      voltage[0].value = current[0].value * resistance[0].value;
+    } else if (current.attr("disabled") == "disabled") {
+      current[0].value = voltage[0].value / resistance[0].value;
+    } else if (resistance.attr("disabled") == "disabled") {
+      resistance[0].value = voltage[0].value / current[0].value;
+    }
+  }
+</script>
